@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 )
 
 type Response struct {
@@ -39,12 +40,15 @@ func Query(ip string, portOnServer, portOnClient int) (Response, error) {
 		resp   string
 	)
 
-	conn, err = net.Dial("tcp", ip+":113")
+	conn, err = net.Dial("tcp", net.JoinHostPort(ip, "113"))
 	if err != nil {
 		goto Error
 	}
 
-	_, err = conn.Write([]byte(fmt.Sprintf("%d, %d", portOnServer, portOnClient)))
+	// timeout the ident read after 10 seconds
+	conn.SetReadDeadline(time.Now().Add(time.Second * 10))
+
+	_, err = conn.Write([]byte(fmt.Sprintf("%d, %d", portOnServer, portOnClient) + "\r\n"))
 	if err != nil {
 		goto Error
 	}
