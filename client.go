@@ -1,5 +1,5 @@
 // Package ident implements an RFC 1413 client
-package ident // import "honnef.co/go/ident"
+package ident
 
 import (
 	"bufio"
