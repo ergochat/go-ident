@@ -9,12 +9,15 @@ import (
 	"time"
 )
 
+// Response is a successful answer to our query to the identd server.
 type Response struct {
 	OS         string
 	Charset    string
 	Identifier string
 }
 
+// ResponseError indicates that the identd server returned an error rather than an
+// identifying string.
 type ResponseError struct {
 	Type string
 }
@@ -23,6 +26,8 @@ func (e ResponseError) Error() string {
 	return fmt.Sprintf("Ident error: %s", e.Type)
 }
 
+// ProtocolError indicates that an error occurred with the protocol itself, that the response
+// could not be successfully parsed or was malformed.
 type ProtocolError struct {
 	Line string
 }
@@ -31,7 +36,8 @@ func (e ProtocolError) Error() string {
 	return fmt.Sprintf("Unexpected response from server: %s", e.Line)
 }
 
-func Query(ip string, portOnServer, portOnClient int) (Response, error) {
+// Query makes an Ident query, if timeout is >0 the query is timed out after that many seconds.
+func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response, error) {
 	var (
 		conn   net.Conn
 		err    error
@@ -45,8 +51,10 @@ func Query(ip string, portOnServer, portOnClient int) (Response, error) {
 		goto Error
 	}
 
-	// timeout the ident read after 10 seconds
-	conn.SetReadDeadline(time.Now().Add(time.Second * 10))
+	// stop the ident read after <timeout> seconds
+	if timeout > 0 {
+		conn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(timeout)))
+	}
 
 	_, err = conn.Write([]byte(fmt.Sprintf("%d, %d", portOnServer, portOnClient) + "\r\n"))
 	if err != nil {
