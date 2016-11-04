@@ -53,7 +53,7 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response
 
 	// stop the ident read after <timeout> seconds
 	if timeout > 0 {
-		conn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(timeout)))
+		conn.SetDeadline(time.Now().Add(time.Second * time.Duration(timeout)))
 	}
 
 	_, err = conn.Write([]byte(fmt.Sprintf("%d, %d", portOnServer, portOnClient) + "\r\n"))
