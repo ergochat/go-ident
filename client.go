@@ -98,7 +98,7 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response
 			goto ProtocolError
 		}
 
-		return Response{}, ResponseError{fields[3]}
+		return Response{}, ResponseError{fields[2]}
 	}
 ProtocolError:
 	return Response{}, ProtocolError{resp}
