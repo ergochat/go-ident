@@ -46,9 +46,13 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response
 		resp   string
 	)
 
-	conn, err = net.Dial("tcp", net.JoinHostPort(ip, "113"))
+	if timeout > 0 {
+		conn, err = net.DialTimeout("tcp", net.JoinHostPort(ip, "113"), time.Duration(timeout))
+	} else {
+		conn, err = net.Dial("tcp", net.JoinHostPort(ip, "113"))
+	}
 	if err != nil {
-		goto Error
+		return Response{}, err
 	}
 
 	// stop the ident read after <timeout> seconds
@@ -58,24 +62,24 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response
 
 	_, err = conn.Write([]byte(fmt.Sprintf("%d, %d", portOnServer, portOnClient) + "\r\n"))
 	if err != nil {
-		goto Error
+		return Response{}, err
 	}
 
 	r = bufio.NewReader(conn)
 	resp, err = r.ReadString('\n')
 	if err != nil {
-		goto Error
+		return Response{}, err
 	}
 
 	fields = strings.SplitN(strings.TrimSpace(resp), " : ", 4)
 	if len(fields) < 3 {
-		goto ProtocolError
+		return Response{}, ProtocolError{resp}
 	}
 
 	switch fields[1] {
 	case "USERID":
 		if len(fields) != 4 {
-			goto ProtocolError
+			return Response{}, ProtocolError{resp}
 		}
 
 		var os, charset string
@@ -95,13 +99,10 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response
 		}, nil
 	case "ERROR":
 		if len(fields) != 3 {
-			goto ProtocolError
+			return Response{}, ProtocolError{resp}
 		}
 
 		return Response{}, ResponseError{fields[2]}
 	}
-ProtocolError:
-	return Response{}, ProtocolError{resp}
-Error:
 	return Response{}, err
 }
