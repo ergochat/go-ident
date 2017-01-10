@@ -47,7 +47,7 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response
 	)
 
 	if timeout > 0 {
-		conn, err = net.DialTimeout("tcp", net.JoinHostPort(ip, "113"), time.Duration(timeout))
+		conn, err = net.DialTimeout("tcp", net.JoinHostPort(ip, "113"), time.Duration(timeout)*time.Second)
 	} else {
 		conn, err = net.Dial("tcp", net.JoinHostPort(ip, "113"))
 	}
