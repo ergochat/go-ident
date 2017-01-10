@@ -60,7 +60,7 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response
 		conn.SetDeadline(time.Now().Add(time.Second * time.Duration(timeout)))
 	}
 
-	_, err = conn.Write([]byte(fmt.Sprintf("%d, %d", portOnServer, portOnClient) + "\r\n"))
+	_, err = conn.Write([]byte(fmt.Sprintf("%d, %d", portOnClient, portOnServer) + "\r\n"))
 	if err != nil {
 		return Response{}, err
 	}
