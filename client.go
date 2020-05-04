@@ -37,22 +37,15 @@ func (e ProtocolError) Error() string {
 }
 
 // Query makes an Ident query, if timeout is >0 the query is timed out after that many seconds.
-func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response, error) {
-	var (
-		conn   net.Conn
-		err    error
-		fields []string
-		r      *bufio.Reader
-		resp   string
-	)
-
+func Query(ip string, portOnServer, portOnClient int, timeout float64) (response Response, err error) {
+	var conn net.Conn
 	if timeout > 0 {
 		conn, err = net.DialTimeout("tcp", net.JoinHostPort(ip, "113"), time.Duration(timeout)*time.Second)
 	} else {
 		conn, err = net.Dial("tcp", net.JoinHostPort(ip, "113"))
 	}
 	if err != nil {
-		return Response{}, err
+		return
 	}
 
 	// stop the ident read after <timeout> seconds
@@ -62,24 +55,27 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response
 
 	_, err = conn.Write([]byte(fmt.Sprintf("%d, %d", portOnClient, portOnServer) + "\r\n"))
 	if err != nil {
-		return Response{}, err
+		return
 	}
 
-	r = bufio.NewReader(conn)
-	resp, err = r.ReadString('\n')
+	r := bufio.NewReader(conn)
+	resp, err := r.ReadString('\n')
 	if err != nil {
-		return Response{}, err
+		return
 	}
 
-	fields = strings.SplitN(strings.TrimSpace(resp), " : ", 4)
+	fields := strings.SplitN(resp, ":", 4)
 	if len(fields) < 3 {
-		return Response{}, ProtocolError{resp}
+		return response, ProtocolError{resp}
+	}
+	for i, field := range fields {
+		fields[i] = strings.TrimSpace(field)
 	}
 
 	switch fields[1] {
 	case "USERID":
 		if len(fields) != 4 {
-			return Response{}, ProtocolError{resp}
+			return response, ProtocolError{resp}
 		}
 
 		var os, charset string
@@ -99,10 +95,12 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (Response
 		}, nil
 	case "ERROR":
 		if len(fields) != 3 {
-			return Response{}, ProtocolError{resp}
+			return response, ProtocolError{resp}
 		}
 
-		return Response{}, ResponseError{fields[2]}
+		return response, ResponseError{fields[2]}
+	default:
+		err = ProtocolError{resp}
 	}
-	return Response{}, err
+	return
 }
