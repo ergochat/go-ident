@@ -59,10 +59,11 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (response
 	}
 
 	r := bufio.NewReader(conn)
-	resp, err := r.ReadString('\n')
+	respBytes, err := r.ReadSlice('\n')
 	if err != nil {
 		return
 	}
+	resp := string(respBytes)
 
 	fields := strings.SplitN(resp, ":", 4)
 	if len(fields) < 3 {
