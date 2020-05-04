@@ -58,7 +58,7 @@ func Query(ip string, portOnServer, portOnClient int, timeout float64) (response
 		return
 	}
 
-	r := bufio.NewReader(conn)
+	r := bufio.NewReaderSize(conn, 1024)
 	respBytes, err := r.ReadSlice('\n')
 	if err != nil {
 		return
