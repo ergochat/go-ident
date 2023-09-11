@@ -47,6 +47,7 @@ func Query(ip string, portOnServer, portOnClient int, timeout time.Duration) (re
 	if err != nil {
 		return
 	}
+	defer conn.Close()
 
 	// stop the ident read after <timeout> seconds
 	if timeout > 0 {
